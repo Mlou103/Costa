@@ -1,97 +1,102 @@
+/*
+  Rui Santos
+  Complete project details at our blog.
+    - ESP32: https://RandomNerdTutorials.com/esp32-firebase-realtime-database/
+    - ESP8266: https://RandomNerdTutorials.com/esp8266-nodemcu-firebase-realtime-database/
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files.
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+  Based in the RTDB Basic Example by Firebase-ESP-Client library by mobizt
+  https://github.com/mobizt/Firebase-ESP-Client/blob/main/examples/RTDB/Basic/Basic.ino
+*/
+
 #include <Arduino.h>
-#include <DHT.h>
-#include <DHT_U.h>
-#include <FirebaseFS.h>
-#include <Wifi.h>
-#include <Update.h>
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
 
-/* 1. Define the WiFi credentials */
-#define WIFI_SSID "WIFI_AP"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
 
-/* 2. Define the API Key */
-#define API_KEY "API_KEY"
+// Insert your network credentials
+#define WIFI_SSID "CHEVAL_DE_3 9097"
+#define WIFI_PASSWORD "3E14h:67"
 
-/* 3. Define the project ID */
-#define FIREBASE_PROJECT_ID "PROJECT_ID"
+// Insert Firebase project API Key
+#define API_KEY "AIzaSyBITx2fRtPBMOkWFVhCSCUtwVryAuCRMKw"
 
-/* 4. Define the user Email and password that alreadey registerd or added in your project */
-#define USER_EMAIL "USER_EMAIL"
-#define USER_PASSWORD "USER_PASSWORD"
+// Insert RTDB URLefine the RTDB URL */
+#define DATABASE_URL "https://tp4a-12245-default-rtdb.europe-west1.firebasedatabase.app/" 
 
-//Variable Bouton
-const int buttonPin = 12; // La broche à laquelle le bouton est connecté
-int ButtonState = LOW; // État précédent du bouton (initialisé à LOW)
-bool press = 0;
-//Variable Led
-#define  LED 2
+//Define Firebase Data object
+FirebaseData fbdo;
 
-//Variable LDR
-const int LIGHT_SENSOR_PIN = 39;
-int analogValue;
+FirebaseAuth auth;
+FirebaseConfig config;
 
-//Varibale DHT11
-#define DHTPIN 26
-#define DHTTYPE    DHT11 
-DHT_Unified dht(DHTPIN, DHTTYPE);
-uint32_t delayMS;
-String Temp;
-String Hum;
+unsigned long sendDataPrevMillis = 0;
+int count = 0;
+bool signupOK = false;
 
-void setup() {
+void setup(){
   Serial.begin(115200);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
 
-//Config Bouton
-  pinMode(buttonPin, INPUT_PULLUP); // Active la résistance de pull-up interne
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
 
-//Config LED
-  pinMode(LED, OUTPUT); //configuration de la Pin en sortie/
-  digitalWrite(LED, LOW); //Etat de base à 0/
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
 
-  //Config DHT11
-  dht.begin(); //Lance la lecture des données/
+  /* Sign up */
+  if (Firebase.signUp(&config, &auth, "", "")){
+    Serial.println("ok");
+    signupOK = true;
+  }
+  else{
+    Serial.printf("%s\n", config.signer.signupError.message.c_str());
+  }
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
 }
 
-void loop() {
-  //DHT
-  sensors_event_t event;
-  dht.temperature().getEvent(&event);
-
-  //Bouton
-  ButtonState = digitalRead(buttonPin) == LOW;
-
-  // LDR
-  analogValue = analogRead(LIGHT_SENSOR_PIN);
-  float lightPercentage = 100-((analogValue / 4095.0) * 100.0); // Calcul du pourcentage inversé
-  //Serial.println(lightPercentage, 2); // Affiche le pourcentage avec 2 décimales
-if (ButtonState == 1 && press){
-  press = 0;
-  }
-if (ButtonState == 0 && !press){
-  press = 1;
-  // Prise de données du DHT11
-  if (isnan(event.temperature)) {
-    Serial.println(F("Error reading temperature!"));
+void loop(){
+  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
+    sendDataPrevMillis = millis();
+    /*/ Write an Int number on the database path test/int
+    if (Firebase.RTDB.setInt(&fbdo, "test/int", count)){
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
     }
-  else {
-    Temp = (event.temperature);
-    Serial.println(Temp);
+    else {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
     }
-  // Get humidity event and print its value.
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    Serial.println(F("Error reading humidity!"));
+    count++;
+    /*/
+    // Write an Float number on the database path test/float
+    if (Firebase.RTDB.setFloat(&fbdo, "test/float", 0.01 + random(0,100))){
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
     }
-  else {
-    Hum = (event.relative_humidity);
-    Serial.println(Hum);
+    else {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
     }
-  }
-
-  if (false) { // demande Led On
-    digitalWrite(LED, HIGH);
-  }
-  if (false) { // demande Led Off
-  digitalWrite(LED, LOW);
   }
 }
