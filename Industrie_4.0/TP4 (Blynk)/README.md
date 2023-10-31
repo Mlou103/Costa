@@ -12,8 +12,8 @@ Réaliser une application Blynk qui devra comporter les éléments (Widgets) sui
   - Gauge
   - SuperChard
 
-`#0969DA` Pour une meilleur visibilité, on utilisera le Widget « Tabs » dans __Interfaces__ pour
+__Pour une meilleur visibilité, on utilisera le Widget « Tabs » dans Interfaces pour
 répartir ces objets sur plusieurs écrans.
 Le choix des périphériques ainsi que les liens entre les Widgets et ceux-ci sont laissés
-à votre entière imagination, MAIS ATTENTION, PAS DE PLAGIAT!
+à votre entière imagination, MAIS ATTENTION, PAS DE PLAGIAT!__
 
