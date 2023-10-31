@@ -1,3 +1,3 @@
-# TP 2 (Ind
-Pour les cours de M costa
-Open in Visual Studio Code
+# TP 2 (Google Sheet)
+Dans un premier temps, vous câblerez les éléments suivants à votre NodeMCU:
+
