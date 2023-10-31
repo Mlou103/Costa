@@ -4,4 +4,5 @@ Attention que les données provenant du DHT11 (température & humidité) seront 
 Astuce: Pour connaître l’IP du serveur MQTT dans le contenair Docker, il faut connaître l’ID de celui‐ci en utilisant la commande suivante : docker ps
 ![image](https://github.com/Mlou103/Costa/assets/115471197/a2bbe64a-3c62-4b2c-aa96-e6f11aa3cb15)
 Ensuite, pour connaître l’IP, lancer la commande suivante : docker inspect d10f045b3934
+
 ![image](https://github.com/Mlou103/Costa/assets/115471197/237a7347-91d0-46db-9482-94e4274bbc84)
