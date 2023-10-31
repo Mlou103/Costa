@@ -1,0 +1,112 @@
+/* Réinitialisation des marges et des paddings */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/* Styles généraux pour le boutons */
+#bouton1 {
+  padding: 10px 20px;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease; /* Ajoutez "transform" à la transition */
+  margin: 10px;
+  transform: scale(1); /* Échelle de base (pas de zoom) */
+}
+#bouton1:hover {
+  transform: scale(1.05); /* Légère agrandissement au survol (5% de zoom) */
+}
+#bouton1 {
+  background-color: rgb(0, 255, 34); /* Couleur lorsque le bouton LED est Off (LED Eteinte) */
+}
+#bouton1.active {
+  background-color: rgb(255, 0, 0); /* Couleur lorsque le bouton LED est On (LED allumée) */
+}
+/* Style global de la page */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+}
+
+/* Style de l'en-tête (header) */
+header {
+  text-align: center;
+  background-color: #007BFF;
+  color: #fff;
+  padding: 20px;
+}
+
+/* Style du titre */
+h1 {
+  font-size: 36px;
+}
+
+/* Style de la section des données */
+.donnees {
+  display: flex;
+  justify-content: space-around;
+  background-color: #fff;
+  margin: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Style des sections de données (humidité et température) */
+.humidite,
+.temperature {
+  text-align: center;
+}
+
+/* Style des titres des sections de données */
+h2 {
+  font-size: 24px;
+  color: #007BFF;
+  margin-bottom: 10px;
+}
+
+/* Style du contenu principal */
+.contenu {
+  text-align: center;
+  margin: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Style des liens */
+a {
+  text-decoration: none;
+  color: #007BFF;
+  font-weight: bold;
+}
+
+/* Style du pied de page (footer) */
+footer {
+  text-align: center;
+  background-color: #007BFF;
+  color: #fff;
+  padding: 10px;
+}
+
+/* Réactivité pour les écrans plus petits (ajouter des règles CSS appropriées) */
+
+@media (max-width: 768px) {
+  /* Ajoutez ici les règles CSS pour les écrans plus petits */
+}
+/* Styles de base pour la LED */
+#led1 {
+  width: 50px;
+  height: 50px;
+  background-color: #ffffff; /* Couleur grise pour la LED éteinte */
+  border-radius: 50%; /* Forme de cercle pour la LED */
+  transition: background-color 0.5s ease; /* Animation de transition en fond */
+}
+
+
+
+
+
+
+
