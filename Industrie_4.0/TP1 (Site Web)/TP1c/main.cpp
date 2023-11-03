@@ -8,6 +8,16 @@
 #include "ESPAsyncWebServer.h"   // Bibliothèque pour créer un serveur web asynchrone sur l'ESP32
 #include <AsyncTCP.h>            // Bibliothèque pour la gestion asynchrone des connexions TCP
 
+//bibliothèques pour OLED
+#include <Wire.h>               // Inclure la bibliothèque pour la communication I2C
+#include <Adafruit_GFX.h>       // Inclure la bibliothèque pour les fonctionnalités graphiques
+#include <Adafruit_SSD1306.h>   // Inclure la bibliothèque pour l'écran OLED
+#define SCREEN_WIDTH 128        // Largeur de l'écran OLED en pixels
+#define SCREEN_HEIGHT 64        // Hauteur de l'écran OLED en pixels
+#define OLED_RESET    -1        // Pas de pin de réinitialisation pour la plupart des modules OLED
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+bool start = true;
+
 // Définition des informations de connexion WiFi
 const char* ssid = "CHEVAL_DE_3 9097";  // Nom du réseau WiFi
 const char* password = "3E14h:67";      // Mot de passe du réseau WiFi
@@ -26,11 +36,39 @@ bool ledAllumee = false;      // Variable booléenne pour stocker l'état de la 
 // Création du serveur web et du WebSocket
 AsyncWebServer server(80);    // Serveur web écoutant sur le port 80
 AsyncWebSocket ws("/ws");     // WebSocket écoutant sur le chemin "/ws"
-
+int clientsConnectes = 0;
 // Fonction pour notifier tous les clients connectés via WebSocket des valeurs de température et d'humidité
 void notifyClients() {
   // Crée et envoie un message JSON contenant les valeurs de température et d'humidité à tous les clients connectés
   ws.textAll(String("{\"temperature\":") + Temp + String(",\"humidite\":") + Hum + String("}"));
+}
+
+// Fonction pour dessiner la température et l'humidité sur l'écran OLED
+void draw() {
+  display.clearDisplay();
+  //LED
+  display.setTextSize(2); // Taille du texte plus grande pour l'état de la LED
+  display.setTextColor(SSD1306_WHITE); // Couleur du texte en blanc
+  display.setCursor(0, 0); // Position du début du texte en haut à gauche
+  display.println(ledAllumee ? "LED ON" : "LED OFF");
+// Temp et Hum
+  display.setTextSize(1); // Taille du texte normale pour la température et l'humidité
+  display.setCursor(0, 20); // Position du début du texte en dessous de l'état de la LED
+  display.print("Temp: ");
+  display.print(Temp);
+  display.println(" C");
+
+  display.setCursor(0, 30); // Position du début du texte pour l'humidité
+  display.print("Hum: ");
+  display.print(Hum);
+  display.println(" %");
+
+  // Nombre de clients connectés
+  display.setCursor(0, 40); // Position du début du texte pour le nombre de clients
+  display.print("Clients: ");
+  display.print(clientsConnectes);
+  
+  display.display(); // Actualisez l'affichage avec les nouvelles données
 }
 
 // Fonction pour notifier tous les clients connectés de l'état actuel de la LED
@@ -81,12 +119,17 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
   // Traite les différents types d'événements
   switch (type) {
     case WS_EVT_CONNECT:
+      clientsConnectes++;
+      draw();
       // Un client s'est connecté, affiche son ID et son adresse IP, puis envoie l'état de la LED et de la température
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
       notifyLedState();
       notifyClients();
+
       break;
     case WS_EVT_DISCONNECT:
+      clientsConnectes--;
+      draw();
       // Un client s'est déconnecté, affiche son ID
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
       break;
@@ -103,6 +146,15 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 
 // Fonction d'initialisation, exécutée une fois au démarrage
 void setup() {
+
+  // Initialiser l'écran OLED avec l'adresse I2C standard (0x3C ou 0x3D pour certains écrans)
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Boucle infinie si l'écran ne peut pas être initialisé
+  }
+  
+  display.clearDisplay();  // Effacer l'affichage
+
   // Configure la broche de la LED en sortie et l'éteint
   pinMode(LED, OUTPUT);
   digitalWrite(LED, LOW);
@@ -155,7 +207,9 @@ void setup() {
 void loop() {
   static String lastTemp;
   static String lastHum;
+  static bool lastLED;
   
+
   sensors_event_t event;
   dht.temperature().getEvent(&event);
   if (!isnan(event.temperature)) {
@@ -167,10 +221,21 @@ void loop() {
     Hum = String(event.relative_humidity);
   }
 
+  if (start) {
+    draw();
+    start = false;
+  }
   // Vérifiez si les valeurs ont changé
   if (Temp != lastTemp || Hum != lastHum) {
+    // Mettre à jour l'affichage OLED avec la température et l'humidité
+    draw();
     notifyClients();  // Notifiez les clients des nouvelles valeurs
     lastTemp = Temp;  // Mettez à jour les dernières valeurs connues
     lastHum = Hum;
+  }
+  // Mettre à jour l'affichage OLED avec l'état de la LED 
+  if (ledAllumee != lastLED) {
+    draw();
+    lastLED = ledAllumee;
   }
 }
