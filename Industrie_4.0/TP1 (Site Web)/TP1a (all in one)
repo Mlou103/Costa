@@ -4,6 +4,16 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
+//bibliothèques pour OLED
+#include <Wire.h>               // Inclure la bibliothèque pour la communication I2C
+#include <Adafruit_GFX.h>       // Inclure la bibliothèque pour les fonctionnalités graphiques
+#include <Adafruit_SSD1306.h>   // Inclure la bibliothèque pour l'écran OLED
+#define SCREEN_WIDTH 128        // Largeur de l'écran OLED en pixels
+#define SCREEN_HEIGHT 64        // Hauteur de l'écran OLED en pixels
+#define OLED_RESET    -1        // Pas de pin de réinitialisation pour la plupart des modules OLED
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+bool start = true;
+
 const char* ssid = "CHEVAL_DE_3 9097";  /*Entrer Le SSID*/
 const char* password = "3E14h:67";  /*Entrer Le Mdp*/
 WiFiClient client; /*Objet client*/
@@ -19,9 +29,36 @@ String Hum;
 #define  LED 2 /*Instancie la pin GP2 à la variable LED*/
 int LED_Status; /*Création d'une varibale int */
 
+void draw() {
+  display.clearDisplay();
+  //LED
+  display.setTextSize(2); // Taille du texte plus grande pour l'état de la LED
+  display.setTextColor(SSD1306_WHITE); // Couleur du texte en blanc
+  display.setCursor(0, 0); // Position du début du texte en haut à gauche
+  display.println(LED_Status ? "LED ON" : "LED OFF");
+// Temp et Hum
+  display.setTextSize(1); // Taille du texte normale pour la température et l'humidité
+  display.setCursor(0, 20); // Position du début du texte en dessous de l'état de la LED
+  display.print("Temp: ");
+  display.print(Temp);
+  display.println(" C");
+
+  display.setCursor(0, 30); // Position du début du texte pour l'humidité
+  display.print("Hum: ");
+  display.print(Hum);
+  display.println(" %");
+  
+  display.display(); // Actualisez l'affichage avec les nouvelles données
+}
 
 void setup() 
 {
+    // Initialiser l'écran OLED avec l'adresse I2C standard (0x3C ou 0x3D pour certains écrans)
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Boucle infinie si l'écran ne peut pas être initialisé
+  }
+  display.clearDisplay();  // Effacer l'affichage
   Serial.begin(115200); /*Vitesse de communication bauds*/ 
   dht.begin(); /*Lance la lecture des données*/
   pinMode(LED, OUTPUT); /*configuration de la Pin en sortie*/
@@ -102,6 +139,7 @@ void loop() {
     Serial.print(event.temperature);
     Serial.println(F("°C"));
     Temp = (event.temperature);
+    draw();
   }
   // Get humidity event and print its value.
   dht.humidity().getEvent(&event);
@@ -113,6 +151,7 @@ void loop() {
     Serial.print(event.relative_humidity);
     Serial.println(F("%"));
     Hum = (event.relative_humidity);
+    draw();
   }
   delay(1000);
 
@@ -139,6 +178,7 @@ void loop() {
           Serial.println("LED in ON");
           digitalWrite(LED, HIGH);
           LED_Status = HIGH;
+          draw();
         }
 
         // Vérifie si la requête contient "GET /LED_OFF"
@@ -147,6 +187,7 @@ void loop() {
           Serial.println("LED in OFF");
           digitalWrite(LED, LOW);
           LED_Status = LOW;
+          draw();
         }
 
         // Appelle la fonction html() pour générer une réponse HTML
