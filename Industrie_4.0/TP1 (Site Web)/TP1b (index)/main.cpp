@@ -5,6 +5,16 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
+//bibliothèques pour OLED
+#include <Wire.h>               // Inclure la bibliothèque pour la communication I2C
+#include <Adafruit_GFX.h>       // Inclure la bibliothèque pour les fonctionnalités graphiques
+#include <Adafruit_SSD1306.h>   // Inclure la bibliothèque pour l'écran OLED
+#define SCREEN_WIDTH 128        // Largeur de l'écran OLED en pixels
+#define SCREEN_HEIGHT 64        // Hauteur de l'écran OLED en pixels
+#define OLED_RESET    -1        // Pas de pin de réinitialisation pour la plupart des modules OLED
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+bool start = true;
+
 // Informations sur le réseau Wi-Fi
 // Vous devez remplacer les informations pas celles de votre réseau
 const char* ssid     = "CHEVAL_DE_3 9097";
@@ -12,6 +22,7 @@ const char* password = "3E14h:67";
 
 //Variable Led
 #define  LED 2
+bool etatLed = false ;
 
 //Varibale DHT11
 #define DHTPIN 26
@@ -31,6 +42,28 @@ File FileCSS;
 
 String PageJava;
 File FileJava;
+
+void draw() {
+  display.clearDisplay();
+  //LED
+  display.setTextSize(2); // Taille du texte plus grande pour l'état de la LED
+  display.setTextColor(SSD1306_WHITE); // Couleur du texte en blanc
+  display.setCursor(0, 0); // Position du début du texte en haut à gauche
+  display.println(etatLed ? "LED ON" : "LED OFF");
+// Temp et Hum
+  display.setTextSize(1); // Taille du texte normale pour la température et l'humidité
+  display.setCursor(0, 20); // Position du début du texte en dessous de l'état de la LED
+  display.print("Temp: ");
+  display.print(Temp);
+  display.println(" C");
+
+  display.setCursor(0, 30); // Position du début du texte pour l'humidité
+  display.print("Hum: ");
+  display.print(Hum);
+  display.println(" %");
+  
+  display.display(); // Actualisez l'affichage avec les nouvelles données
+}
 
 // fonction Fichier serveur
 String OpenFileHtml (){
@@ -73,6 +106,13 @@ String OpenFileJava (){
 }
 void setup() 
 {
+  // Initialiser l'écran OLED avec l'adresse I2C standard (0x3C ou 0x3D pour certains écrans)
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Boucle infinie si l'écran ne peut pas être initialisé
+  }
+  display.clearDisplay();  // Effacer l'affichage
+
   //Config LED
   pinMode(LED, OUTPUT); /*configuration de la Pin en sortie*/
   digitalWrite(LED, LOW); /*Etat de base à 0*/
@@ -183,12 +223,17 @@ void loop()
           client.println();
           client.print(reponse);
           client.stop();
+          etatLed = true ;
+          draw();
         }
         if (DemandeClientStr == ("GET /Ledtrue HTTP/1.1")){
           digitalWrite(LED, HIGH);
+          draw();
         }
         if (DemandeClientStr == ("GET /Ledfalse HTTP/1.1")) { // demande Led Off
           digitalWrite(LED, LOW);
+          etatLed = false ;
+          draw();
         }
       }
     }
